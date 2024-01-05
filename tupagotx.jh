@@ -1,0 +1,208 @@
+
+
+
+entity Bancos {
+	nombre String required
+    autor String required
+    editor String
+    autorFecha Instant required
+    editorFecha Instant
+}
+
+entity Cuentas {
+	numeroCuenta String required
+    clabe String required
+    webHook String
+    autor String required
+    editor String
+    autorFecha Instant required
+    editorFecha Instant
+}
+
+
+entity Merchants {
+	nombre String required
+    rfc String required pattern(/^([A-ZÑ&]{3,4}) ?(?:- ?)?(\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])) ?(?:- ?)?([A-Z\d]{2})([A\d])$/) 
+	isActive Boolean
+    autor String required
+    editor String
+    autorFecha Instant required
+    editorFecha Instant
+}
+
+entity Usuarios {
+	nombre String required
+    apellidoPaterno String required
+    apellidoMaterno String required
+    email String required pattern(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)
+    isActive Boolean
+    autor String required
+    editor String
+    autorFecha Instant required
+    editorFecha Instant
+}
+
+entity Direcciones {
+	calle String
+    noExt String
+    noInt String
+    colonia String
+    isDefault Boolean
+    isActive Boolean
+    autor String required
+    editor String
+    autorFecha Instant required
+    editorFecha Instant
+}
+
+entity CodigosPostales {
+	municipio String required
+    cp String required minlength(5) maxlength(5)
+    estado String required
+    pais String required
+}
+
+entity Telefonos {
+	numero String required minlength(10) maxlength(10)
+    isDefault Boolean
+    isActive Boolean
+    autor String required
+    editor String
+    autorFecha Instant required
+    editorFecha Instant
+}
+
+entity PagosInmutable {
+    monto BigDecimal required
+    comision BigDecimal required
+    noTerminal Integer
+    referencia Long
+    factura String
+    fechaFactura LocalDate
+    mensaje String
+    tipoError String
+    tipoDeclinacion String
+    version Integer
+    timestamp Instant required
+    hash String required
+}
+
+entity WebhooksInmutable {
+    webhookEstatus WebhookCodigos
+    webhookMensaje String
+	timestamp Instant required
+}
+
+enum TipoPago {
+	QR, NFC
+}
+
+enum WebhookCodigos {
+	PROCESSED_200
+    INSUFFICIENT_DATA400
+    NOT_VALID_403
+    REFERENCE_NOTFOUND_404
+	GENERAL_ERROR_500
+}
+
+entity TransaccionesInmutable {
+	tipo TipoPago
+    monto BigDecimal required
+    noTerminal Integer
+    referencia Long
+    factura String
+    fechaFactura LocalDate
+    mensaje String
+    codigo String
+    tipoError String 
+    tipoDeclinacion String
+    ipCliente String required pattern(/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/)
+    resultadoIndeterminado Boolean
+    version Integer required
+    timestamp Instant required
+}
+
+entity StateTxInmutable {
+	estatusTx EstatusTx required
+	timestamp Instant required
+}
+
+
+enum EstatusTx {
+	ENVIADO_PROCESADOR,
+    REQUIERE_VERIFICACION,
+    NOTIFICADO,
+    EXITO,
+    PENDIENTE,
+    ERROR,
+    EXPIRADO
+}
+
+
+entity ErrorBitacora {
+	idReferencia Long required
+    operacion String required
+	codigo String required
+    mensaje String required
+    timestamp Instant required
+}
+
+relationship OneToOne {
+	Direcciones to CodigosPostales
+    Cuentas to Bancos
+    TransaccionesInmutable to PagosInmutable
+}
+
+relationship OneToMany {
+	Usuarios to Telefonos
+    Usuarios to Direcciones
+	Merchants to Usuarios
+    Merchants to Cuentas
+    Cuentas to TransaccionesInmutable
+    PagosInmutable to WebhooksInmutable
+    TransaccionesInmutable to StateTxInmutable
+}
+
+
+/*
+relationship OneToOne {
+	Location{country} to Country
+}
+
+relationship OneToOne {
+	Department{location} to Location
+}
+
+relationship ManyToMany {
+	Job{task(title)} to Task{job}
+}
+
+// defining multiple OneToMany relationships with comments
+relationship OneToMany {
+	Employee to Job{employee}
+	Department to Employee{department}
+}
+
+relationship ManyToOne {
+	Employee{manager} to Employee
+}
+
+// defining multiple oneToOne relationships
+relationship OneToOne {
+	JobHistory{job} to Job
+	JobHistory{department} to Department
+	JobHistory{employee} to Employee
+}
+*/
+// Set pagination options
+paginate Merchants, Usuarios, Transacciones, Pagos with infinite-scroll
+paginate Cuentas with pagination
+
+// Use Data Transfer Objects (DTO)
+dto all with mapstruct
+
+// Set service options to all except few
+service all with serviceImpl //except Employee, Job
+
+// Set an angular suffix
+// angularSuffix * with mySuffix
